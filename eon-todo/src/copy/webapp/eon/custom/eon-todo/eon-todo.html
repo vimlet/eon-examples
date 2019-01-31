@@ -1,0 +1,140 @@
+<template>
+  <!-- Input text where we'll type the new items text -->
+  <eon-text type="text" label="To-Do list" placeholder="New Item"></eon-text>
+
+  <!-- Button to add items. In the onclick attribute we name the function to add new items -->
+  <eon-button expand="inline" value="Add"></eon-button>
+
+  <!-- Scroll component that will allow us to scroll through our list -->
+  <eon-scroll thickness="5" fill="false">
+    <!-- Our items container -->
+    <div class="list"></div>
+  </eon-scroll>
+</template>
+
+<script>
+  eon.element({
+
+    name: "eon-todo",
+    style: "eon-todo.css",
+
+    dependencies: [
+      "../../ui/eon-scroll",
+      "../../ui/eon-button",
+      "../../ui/eon-text",
+      "../../ui/eon-checkbox"
+    ],
+
+    properties: {
+      data: {
+        value: [],
+        observe: true
+      }
+    },
+
+    functions: {
+      /*
+        @function addItem
+      */
+      addItem: function (itemText) {
+        var el = this;
+        // Create item information object
+        var item = {
+          text: itemText,
+          checked: false
+        }
+        console.log(el.items);
+        el.items = ["hey"];
+        
+        // Push item
+        el.items.push(item);
+      }
+    },
+    privateFunctions: {
+      /*
+        @function addItem
+      */
+      addItem: function (itemText) {
+        var text = document.querySelector("eon-text");
+        var textValue = text.value;
+
+        // Denied empty values
+        if (textValue != "") {
+          // Create item
+          var item = el._createItem(textValue);
+
+          // Append the item to the list
+          el._appendItem(item);
+
+          // Reset the eon-text value
+          text.reset();
+        }
+      },
+      /*
+        @function createItem
+      */
+      createItem: function (itemText) {
+
+        var item = document.createElement("div");
+        // Create item status checkbox
+        var statusCheck = document.createElement("eon-checkbox");
+        // Set up checkbox
+        statusCheck.classList.add("checkboxItem");
+        statusCheck.label = itemText;
+        statusCheck.inline = true;
+
+        // Create the button that will delete the item
+        var removeBtn = document.createElement("i");
+        removeBtn.classList.add("vicon", "vicon-bin");
+        // Button click listener
+        removeBtn.onclick = function () {
+          // Remove item
+          item.parentNode.removeChild(item);
+        };
+
+        // Append content
+        item.appendChild(removeBtn);
+        item.appendChild(statusCheck);
+        return item;
+      },
+      /*
+        @function appendItem
+      */
+      appendItem: function (itemText) {
+        // Make sure all declared elements are ready to work with them
+        eon.onReady(function () {
+          var list = document.querySelector(".list");
+          // Inserts the new item at the beginning of the list
+          list.insertBefore(item, list.children[0]);
+        });
+      },
+      /*
+        @function removeItemListener
+      */
+      removeItemListener: function (item, removeBtn) {
+        // Crate edit button on click listener
+        removeBtn.onclick = function () {
+          // Get item
+          item.parentNode.removeChild(item);
+        };
+      }
+    },
+
+    onCreated: function () {
+      var el = this;
+      var addBtn = el.template.querySelector("eon-button");
+      var text = el.template.querySelector("eon-text");
+      addBtn.onclick = function(){
+        el.addItem(text.value);
+      };
+    },
+    onPropertyChanged: function (name, oldVal, value) {
+      switch (name) {
+        case ("items"):
+        console.log(this.items);
+          this._addItem();
+          break;
+      }
+    },
+  });
+</script>

@@ -22,26 +22,15 @@
   <!-- Import eon components -->
   <script>
     eon.import([
-      "eon/ui/eon-text",
-      "eon/ui/eon-button",
-      "eon/ui/eon-checkbox",
-      "eon/ui/eon-scroll"
+      "eon/custom/eon-todo"
     ]);
   </script>
 </head>
+
 <body>
 
-  <!-- Input text where we'll type the new items text -->
-  <eon-text type="text" label="To-Do list" placeholder="New Item"></eon-text>
-
-  <!-- Button to add items. In the onclick attribute we name the function to add new items -->
-  <eon-button expand="inline" value="Add" onclick="addItem();"></eon-button>
-  
-  <!-- Scroll component that will allow us to scroll through our list -->
-  <eon-scroll thickness="5" fill="false">
-    <!-- Our items container -->
-    <div class="list"></div>
-  </eon-scroll>
+  <eon-todo></eon-todo>  
 
 </body>
+
 </html>

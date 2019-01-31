@@ -16,8 +16,10 @@ eon-scroll {
 .list > div {
   margin-top: 20px;
 }
-.list eon-button {
-  margin-left: 20px;
+.list i {
+  display: inline-block;
+  margin-right: 20px;
+  cursor: pointer;
 }
 .list eon-checkbox[checked="true"] {
   text-decoration: line-through;

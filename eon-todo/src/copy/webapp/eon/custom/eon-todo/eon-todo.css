@@ -1,0 +1,19 @@
+eon-todo {
+  height: 100%;
+  width: 100%;
+}
+eon-todo eon-scroll {
+  max-height: 500px;
+  height: calc(100% - 76px);
+}
+eon-todo .list > div {
+  margin-top: 20px;
+}
+eon-todo .list i {
+  display: inline-block;
+  margin-right: 20px;
+  cursor: pointer;
+}
+eon-todo .list eon-checkbox[checked="true"] {
+  text-decoration: line-through;
+}

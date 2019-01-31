@@ -4828,10 +4828,10 @@ eon.handleProperty = function (el, config, reflectProperties, observeProperties,
 
     var observe = observeProperties[key];
     var reflect = reflectProperties[key];
-
+    
     // Complex property
     if (typeof value === "object" && value.hasOwnProperty("value")) {
-        if (typeof value.value === "object") {
+        if (value.value.constructor === Object) {
             value = Object.assign({}, value.value);
         } else {
             value = value.value;
