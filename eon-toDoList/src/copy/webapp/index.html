@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>To Do List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Fav icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon/favicon-16x16.png">
+  <link rel="manifest" href="img/favicon/site.webmanifest">
+  <link rel="mask-icon" href="img/favicon/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#4b4b4b">
+  <meta name="theme-color" content="#ffffff">
+  <!-- Style/Logic -->
+  <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
+  <script src="js/main.js"></script>
+  <!-- Import eon.js -->
+  <script src="eon/eon.js"></script>
+  <!-- Import eon components -->
+  <script>
+    eon.import([
+      "eon/ui/eon-text",
+      "eon/ui/eon-button",
+      "eon/ui/eon-checkbox",
+      "eon/ui/eon-scroll"
+    ]);
+  </script>
+</head>
+<body>
+
+  <!-- Component to input the text we want to add into the list -->
+  <eon-text class="addItem" label="To-Do list" name="addItem" type="text" placeholder="New Item"></eon-text>
+
+  <!-- Button to add the text to the list. In the onclick we name the function to add the text. -->
+  <eon-button class="addBtn" value="Add" expand="inline" onclick="addItem();"></eon-button>
+  
+  <!-- Scroll component that will allow us to scroll through our list -->
+  <eon-scroll thickness="5" fill="false">
+    <!-- It will contain the elements to the list that are added. -->
+    <div class="list"></div>
+  </eon-scroll>
+
+</body>
+</html>
