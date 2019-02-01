@@ -25,13 +25,20 @@
       "../../ui/eon-checkbox"
     ],
 
-    properties: {
-      data: {
-        value: [],
-        observe: true
-      }
+    data: {
+      items: []
     },
 
+    privateProperties: {
+      /*
+        @property (private) {Object} _refs
+        @description Object with useful information
+      */
+      refs: {
+        value: {},
+        reflect: false
+      }
+    },
     functions: {
       /*
         @function addItem
@@ -43,45 +50,29 @@
           text: itemText,
           checked: false
         }
-        console.log(el.items);
-        el.items = ["hey"];
-        
         // Push item
-        el.items.push(item);
+        el.data.items.push(item);
+        el.data.items = el.data.items;
       }
     },
     privateFunctions: {
       /*
-        @function addItem
-      */
-      addItem: function (itemText) {
-        var text = document.querySelector("eon-text");
-        var textValue = text.value;
-
-        // Denied empty values
-        if (textValue != "") {
-          // Create item
-          var item = el._createItem(textValue);
-
-          // Append the item to the list
-          el._appendItem(item);
-
-          // Reset the eon-text value
-          text.reset();
-        }
-      },
-      /*
         @function createItem
       */
-      createItem: function (itemText) {
-
+      createItem: function (data) {
+        var el = this;
         var item = document.createElement("div");
         // Create item status checkbox
         var statusCheck = document.createElement("eon-checkbox");
         // Set up checkbox
         statusCheck.classList.add("checkboxItem");
-        statusCheck.label = itemText;
+        statusCheck.label = data.text;
         statusCheck.inline = true;
+        statusCheck.checked = data.checked;
+
+        statusCheck.onChange(function(value){
+          data.checked = value;
+        });
 
         // Create the button that will delete the item
         var removeBtn = document.createElement("i");
@@ -89,7 +80,8 @@
         // Button click listener
         removeBtn.onclick = function () {
           // Remove item
-          item.parentNode.removeChild(item);
+          el.data.items.splice(el.data.items.indexOf(data), 1);
+          el.data.items = el.data.items;
         };
 
         // Append content
@@ -98,42 +90,41 @@
         return item;
       },
       /*
-        @function appendItem
+        @function (private) _paint
       */
-      appendItem: function (itemText) {
-        // Make sure all declared elements are ready to work with them
-        eon.onReady(function () {
-          var list = document.querySelector(".list");
-          // Inserts the new item at the beginning of the list
-          list.insertBefore(item, list.children[0]);
-        });
-      },
-      /*
-        @function removeItemListener
-      */
-      removeItemListener: function (item, removeBtn) {
-        // Crate edit button on click listener
-        removeBtn.onclick = function () {
-          // Get item
-          item.parentNode.removeChild(item);
-        };
+      paint: function () {
+        var el = this;
+        var fragment = document.createDocumentFragment();
+        // Loop through items
+        for (var i = 0; i < el.data.items.length; i++) {
+          // Create item
+          var item = el._createItem(el.data.items[i]);
+          fragment.appendChild(item);
+        }
+        el._refs.list.innerHTML = "";
+        el._refs.list.appendChild(fragment);
+        // Reset the eon-text value
+        el._refs.text.reset();
       }
     },
 
     onCreated: function () {
       var el = this;
-      var addBtn = el.template.querySelector("eon-button");
-      var text = el.template.querySelector("eon-text");
-      addBtn.onclick = function(){
-        el.addItem(text.value);
+      // Refs
+      el._refs.text = el.template.querySelector("eon-text");
+      el._refs.addBtn = el.template.querySelector("eon-button");
+      el._refs.list = el.template.querySelector(".list");
+      // Add button click listener
+      el._refs.addBtn.onclick = function () {
+        if(el._refs.text.value){
+          el.addItem(el._refs.text.value);
+        }
       };
     },
-    onPropertyChanged: function (name, oldVal, value) {
-      switch (name) {
-        case ("items"):
-        console.log(this.items);
-          this._addItem();
-          break;
+    onDataChanged: function (key, oldVal, newVal) {
+      if (key == "items") {
+        // Paint list
+        this._paint();
       }
     },
   });

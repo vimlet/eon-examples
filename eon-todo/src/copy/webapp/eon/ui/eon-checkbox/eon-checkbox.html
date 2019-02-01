@@ -146,7 +146,7 @@
             */
             setValue: function () {
                 this._currentValue = this.value;
-                eon.triggerCallback("onChange", this);
+                eon.triggerCallback("onChange", this, this, this.value);
 
             },
             /*
@@ -203,6 +203,7 @@
 
                     if (eon.util.isTrue(oldVal)) {
                         eon.triggerCallback("onUncheck", el);
+                        eon.triggerCallback("onChange", el, el, [false]);
                     }
 
                 } else {
@@ -211,6 +212,7 @@
                     // Required for set style correctly when checkbox is checked and disabled
                     el._refs.input.classList.add("eon-checkbox-checked");
                     eon.triggerCallback("onCheck", el);
+                    eon.triggerCallback("onChange", el, el, [true]);
                 }
 
             },
