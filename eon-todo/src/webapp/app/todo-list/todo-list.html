@@ -11,20 +11,47 @@
       "/ui/eon-text",
       "todo-item"
     ],
+    data: {
+      items: []
+    },
     onRender: function () {
-      var ref = this.ref || {};
+      var self = this;
+      self.refs = {};
 
-      ref.text = this.$1("eon-text");
-      ref.items = this.$1(".items");
+      self.refs.text = this.$1("eon-text");
+      self.refs.items = this.$1(".items");
 
-      ref.text.addEventListener("keyup", function (event) {
+      self.refs.text.addEventListener("keyup", function (event) {
         if (event.keyCode === 13) {
-          var item = document.createElement("todo-item");
-          item.setAttribute("label", ref.text.value);
-          ref.text.clear();
-          ref.items.appendChild(item);
+          self.data.items.push(self.refs.text.value);
+          self.refs.text.clear();
+          self.paintData();
         }
       });
+    },
+    functions: {
+      paintData: function () {
+        var self = this;
+        var fragment = document.createDocumentFragment();
+        var item;
+
+        self.data.items.forEach(function (value) {
+          item = document.createElement("todo-item");
+          item.label = value;
+          fragment.appendChild(item);
+        });
+
+        var new_items = document.createElement("div");
+        new_items.setAttribute("class", "items");
+        new_items.appendChild(fragment);
+        self.appendChild(new_items);
+
+        eon.onReady(function () {
+          self.removeChild(self.refs.items);
+          self.refs.items = new_items;
+        });
+
+      }
     }
   });
 </script>

@@ -14,10 +14,8 @@
     dependencies: [
       "/ui/eon-checkbox"
     ],
-    onPropertyChanged: function (property, oldVal, newVal) {       
-        if(property == "label"){
-          this.$1("eon-checkbox").label = newVal;
-        }
-      }
+    onRender: function() {
+      this.$1("eon-checkbox").label = this.label;
+    }
   });
 </script>
