@@ -1,0 +1,23 @@
+<template>
+  <eon-checkbox label="default"></eon-checkbox>
+</template>
+
+<script>
+  eon.element({
+    name: "todo-item",
+    properties: {
+      label: {
+        reflect: true,
+        value: ""
+      }
+    },
+    dependencies: [
+      "/ui/eon-checkbox"
+    ],
+    onPropertyChanged: function (property, oldVal, newVal) {       
+        if(property == "label"){
+          this.$1("eon-checkbox").label = newVal;
+        }
+      }
+  });
+</script>

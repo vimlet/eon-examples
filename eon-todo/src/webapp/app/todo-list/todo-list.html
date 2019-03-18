@@ -1,0 +1,30 @@
+<template>
+  <div>TO-DO List</div>
+  <eon-text label="What needs to be done?"></eon-text>
+  <div class="items"></div>
+</template>
+
+<script>
+  eon.element({
+    name: "todo-list",
+    dependencies: [
+      "/ui/eon-text",
+      "todo-item"
+    ],
+    onRender: function () {
+      var ref = this.ref || {};
+
+      ref.text = this.$1("eon-text");
+      ref.items = this.$1(".items");
+
+      ref.text.addEventListener("keyup", function (event) {
+        if (event.keyCode === 13) {
+          var item = document.createElement("todo-item");
+          item.setAttribute("label", ref.text.value);
+          ref.text.clear();
+          ref.items.appendChild(item);
+        }
+      });
+    }
+  });
+</script>
