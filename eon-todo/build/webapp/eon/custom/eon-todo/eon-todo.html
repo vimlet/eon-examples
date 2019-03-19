@@ -1,0 +1,131 @@
+<template>
+  <!-- Input text where we'll type the new items text -->
+  <eon-text type="text" label="To-Do list" placeholder="New Item"></eon-text>
+
+  <!-- Button to add items. In the onclick attribute we name the function to add new items -->
+  <eon-button expand="inline" value="Add"></eon-button>
+
+  <!-- Scroll component that will allow us to scroll through our list -->
+  <eon-scroll thickness="5" fill="false">
+    <!-- Our items container -->
+    <div class="list"></div>
+  </eon-scroll>
+</template>
+
+<script>
+  eon.element({
+
+    name: "eon-todo",
+    style: "eon-todo.css",
+
+    dependencies: [
+      "../../ui/eon-scroll",
+      "../../ui/eon-button",
+      "../../ui/eon-text",
+      "../../ui/eon-checkbox"
+    ],
+
+    data: {
+      items: []
+    },
+
+    privateProperties: {
+      /*
+        @property (private) {Object} _refs
+        @description Object with useful information
+      */
+      refs: {
+        value: {},
+        reflect: false
+      }
+    },
+    functions: {
+      /*
+        @function addItem
+      */
+      addItem: function (itemText) {
+        var el = this;
+        // Create item information object
+        var item = {
+          text: itemText,
+          checked: false
+        }
+        // Push item
+        el.data.items.push(item);
+        el.data.items = el.data.items;
+      }
+    },
+    privateFunctions: {
+      /*
+        @function createItem
+      */
+      createItem: function (data) {
+        var el = this;
+        var item = document.createElement("div");
+        // Create item status checkbox
+        var statusCheck = document.createElement("eon-checkbox");
+        // Set up checkbox
+        statusCheck.classList.add("checkboxItem");
+        statusCheck.label = data.text;
+        statusCheck.inline = true;
+        statusCheck.checked = data.checked;
+
+        statusCheck.onChange(function(value){
+          data.checked = value;
+        });
+
+        // Create the button that will delete the item
+        var removeBtn = document.createElement("i");
+        removeBtn.classList.add("vicon", "vicon-bin");
+        // Button click listener
+        removeBtn.onclick = function () {
+          // Remove item
+          el.data.items.splice(el.data.items.indexOf(data), 1);
+          el.data.items = el.data.items;
+        };
+
+        // Append content
+        item.appendChild(removeBtn);
+        item.appendChild(statusCheck);
+        return item;
+      },
+      /*
+        @function (private) _paint
+      */
+      paint: function () {
+        var el = this;
+        var fragment = document.createDocumentFragment();
+        // Loop through items
+        for (var i = 0; i < el.data.items.length; i++) {
+          // Create item
+          var item = el._createItem(el.data.items[i]);
+          fragment.appendChild(item);
+        }
+        el._refs.list.innerHTML = "";
+        el._refs.list.appendChild(fragment);
+        // Reset the eon-text value
+        el._refs.text.reset();
+      }
+    },
+
+    onCreated: function () {
+      var el = this;
+      // Refs
+      el._refs.text = el.template.querySelector("eon-text");
+      el._refs.addBtn = el.template.querySelector("eon-button");
+      el._refs.list = el.template.querySelector(".list");
+      // Add button click listener
+      el._refs.addBtn.onclick = function () {
+        if(el._refs.text.value){
+          el.addItem(el._refs.text.value);
+        }
+      };
+    },
+    onDataChanged: function (key, oldVal, newVal) {
+      if (key == "items") {
+        // Paint list
+        this._paint();
+      }
+    },
+  });
+</script>

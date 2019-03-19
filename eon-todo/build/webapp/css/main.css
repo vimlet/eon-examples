@@ -1,0 +1,32 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+body {
+  padding: 20px;
+  box-sizing: border-box;
+  color: #ffffff;
+  font-size: 18px;
+}
+eon-scroll {
+  max-height: 500px;
+  height: calc(100% - 76px);
+}
+.list > div {
+  margin-top: 20px;
+}
+.list i {
+  display: inline-block;
+  margin-right: 20px;
+  cursor: pointer;
+}
+.list eon-checkbox[checked="true"] {
+  text-decoration: line-through;
+}
+
+@media (max-width: 500px) {
+  body {
+    padding: 10px;
+  }
+}
