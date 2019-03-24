@@ -5956,7 +5956,9 @@ eon.insertImport = function (href) {
     var elementName;
 
     elementName = (href.indexOf(".html") > -1) ? href.match(/[^\/]*$/g)[0].replace(".html", "").toLowerCase() : href.match(/[^\/]*$/g)[0].toLowerCase();
+
     href = (href.indexOf(".html") > -1) ? href : href + "/" + elementName + ".html";
+    href = href.charAt(0) == "@" ? eon.getBasePathUrl(href) : href;
 
     if (!(elementName in eon.imports.templates)) {
 
@@ -6349,7 +6351,7 @@ eon.handleConfigDependencies = function (name) {
     if (elementConfig.dependencies) {
         for (var j = 0; j < elementConfig.dependencies.length; j++) {
             dependencyName = elementConfig.dependencies[j].match(/[^\/]*$/g)[0].replace(".html", "").toLowerCase();
-            dependencyPath = elementConfig.dependencies[j].charAt(0) == "/" ? eon.basePath + elementConfig.dependencies[j] : elementConfig.dependencies[j];
+            dependencyPath = elementConfig.dependencies[j].charAt(0) == "@" ? eon.getBasePathUrl(elementConfig.dependencies[j]) : elementConfig.dependencies[j];
             if (!(dependencyName in eon.imports.templates)) {
                 hasDependencies = true;
                 dependencyPath = (dependencyPath.indexOf(".html") > -1) ? dependencyPath : dependencyPath + "/" + dependencyName + ".html";
@@ -6360,6 +6362,12 @@ eon.handleConfigDependencies = function (name) {
     }
 
     return hasDependencies;
+}
+
+eon.getBasePathUrl = function (url) {
+    
+    url = url.substring(1);
+    return eon.basePath + "/" + url;
 }
 
 // If there are no imports in the document we will trigger onImportsReady event immediately
@@ -7302,6 +7310,8 @@ eon.parse = function (el, config) {
     eon.defineOverlayCreation(el);
     eon.definePlaceholderCreation(el);
 
+    eon.createAttributesObserver(el, config);
+
     eon.triggerAllCallbackEvents(el, config, "onParsed");
     eon.registry.updateElementStatus(el, "parsed");
 
@@ -7871,6 +7881,21 @@ eon.appendElementTemplate = function (el) {
     delete el.template;
 };
 
+eon.generateElementReferences = function (el) {
+    
+    var nodes = el.template.querySelectorAll("[eon-ref]");
+    var node;
+
+    el._ref = el._ref || {};
+
+    for (var i = 0; i < nodes.length; i++) {
+        node = nodes[i];
+        el._ref[node.getAttribute("eon-ref")] = node;
+        node.removeAttribute("eon-ref");
+    }
+
+};
+
 eon.initSourceCallbacks = function (el) {
     // Creates the getSourceElements function even if it has no source elements
     el.getSourceNodes = function () {
@@ -8066,6 +8091,9 @@ eon.declare = function (name, baseElement) {
             // Generates an instance of the element template and assigns it as a property of the element so we can easily access from anywhere
             eon.generateElementTemplate(el);
 
+            // Searches elements tagged to have its reference saved inside the component template 
+            eon.generateElementReferences(el);
+
             // Sets a css rule with the provided display by the config, if no display is provided it will have display block by default
             eon.initializeDisplay(el, config);
             
@@ -8102,8 +8130,6 @@ eon.declare = function (name, baseElement) {
 
                 // Registers the element and generates uid
                 eon.registry.registerElement(el);
-
-                eon.createAttributesObserver(el, config);
 
                 // Updates the references for the source nodes
                 eon.updateSourceCallbacks(el);
@@ -8872,31 +8898,12 @@ eon.util.mapToObject = function (map) {
 };
 
 
-/**
- * :::::::::::::::::::::
- * Progressive Web App
- * :::::::::::::::::::::
- * 
- * > Home screen access - manifest.json
- * > Offline mode - service-worker.js
- * 
- * *** SERVICE WORKERS *** 
- * . Service Worker is an experimental technology. New browsers versions are supporting it
- * by default but its functionality is not guaranteed for now.
- *  
- * . An HTTPS implementation is needed to work with service workers.
- * Localhost is considered a secure origin by browsers as well
- * 
- * ***************************
- * 
- */
-
 eon.cache = eon.cache || {};
 
-eon.cache.config = eon.cache.config || {};
+eon.cache.config = eon.cache.config || false;
 
- // Check if eon has any cache strategy
- if ('serviceWorker' in navigator && Object.keys(eon.cache.config).length) {
+// Check if eon has any cache strategy
+if ('serviceWorker' in navigator && Object.keys(eon.cache.config).length) {
   // Check service worker existence
   (function (proxied) {
     ServiceWorkerContainer.prototype.register = function () {
@@ -8909,14 +8916,14 @@ eon.cache.config = eon.cache.config || {};
 
   eon.onReady(function () {
     // Check service worker existence
-    if(!navigator.serviceWorker._registered) {
+    if (!navigator.serviceWorker._registered) {
 
       // Register eon service worker
       navigator.serviceWorker
         .register(eon.basePath + '/modules/cache-sw.js')
         .then(function () {
           console.log('[ServiceWorker] Registered');
-      });
+        });
 
     }
   });
@@ -8928,39 +8935,51 @@ eon.cache.open = function (cb) {
 
   // Check browser cache storage existence
   if ('caches' in window) {
-
     // Create cache
     caches.open(eon.cache.config.name).then(function (cache) {
       // Cache config
       cb(null, cache);
+    }).catch(function (error) {
+      // Handles exceptions that arise from open().
+      console.error('Error in cache open:', error);
+      throw error;
     });
-
   }
 }
 
 eon.cache.add = function (request, options, cb) {
   var config = eon.cache.config;
 
-  // Conditions
-  var excluded = config.exclude && (options && config.exclude.indexOf(options.name) > -1);
-  var requestAll = config.requests && config.requests.indexOf("*") > -1;
-  var included = requestAll || !options || (options && config.requests && config.requests.indexOf(options.name) > -1);
+  if (config) {
+    // Conditions
+    var excluded = config.exclude && (options && config.exclude.indexOf(options.name) > -1);
+    var requestAll = config.requests && config.requests.indexOf("*") > -1;
+    var included = requestAll || !options || (options && config.requests && config.requests.indexOf(options.name) > -1);
 
-  // Check cache config
-  if (!excluded && included) {
-    // Check eon-cache reference existence
-    if (!eon.cache.ref) {
-      eon.cache.open(function (error, cache) {
-        eon.cache.ref = eon.cache.ref || cache;
-        // Check if the file has been cached already
-        cache.match(request).then(function (cached) {
-          if(!cached) {
-            cache.add(request).then(function () {    
-              if (cb) { cb(null, request) }
-            });
-          }
-        });
-      });
+    // Check cache config
+    if (!excluded && included) {
+      // Check eon-cache reference existence
+      if (!eon.cache.ref) {
+        eon.cache.open(function (error, cache) {
+          eon.cache.ref = eon.cache.ref || cache;
+          // Check if the file has been cached already
+          cache.match(request).then(function (cached) {
+            if (!cached) {
+              cache.add(request).then(function () {
+                if (cb) { cb(null, request) }
+              }).catch(function (error) {
+                // Handles exceptions that arise from add().
+                console.error('Error in add handler:', error);
+                throw error;
+              });
+            }
+          }).catch(function (error) {
+            // Handles exceptions that arise from match().
+            console.error('Error in cache match:', error);
+            throw error;
+          });
+        })
+      }
     }
   }
 }

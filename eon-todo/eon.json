@@ -1,5 +1,5 @@
 {
-  "eon": "release-1.0.6",
+  "eon": "release-1.0.8",
   "path": "src/webapp/eon",
   "ignore": [
     "custom"
