@@ -3694,7 +3694,7 @@ eon.handleLinksAppend = function () {
 eon.handleConfigDependencies = function (name) {
     var hasDependencies = false;
     var elementConfig = eon.imports.config[name];
-    var dependencyName, dependencyPath, dependencyFile;
+    var dependencyName, dependencyPath, dependencyFile, relativeToParent;
 
     // Loop through dependencies path and import new ones
     if (elementConfig.dependencies) {
@@ -3703,8 +3703,9 @@ eon.handleConfigDependencies = function (name) {
             dependencyPath = elementConfig.dependencies[j].charAt(0) == "@" ? eon.getBasePathUrl(elementConfig.dependencies[j]) : elementConfig.dependencies[j];
             if (!(dependencyName in eon.imports.templates)) {
                 hasDependencies = true;
+                relativeToParent = elementConfig.dependencies[j].charAt(0) == "@" || elementConfig.dependencies[j].charAt(0) == "/" ? false : true;
                 dependencyPath = (dependencyPath.indexOf(".html") > -1) ? dependencyPath : dependencyPath + "/" + dependencyName + ".html";
-                dependencyFile = elementConfig.dependencies[j].charAt(0) == "/" ? dependencyPath : eon.imports.paths[name] + dependencyPath;
+                dependencyFile = !relativeToParent ? dependencyPath : eon.imports.paths[name] + dependencyPath;
                 eon.import(dependencyFile);
             }
         }
@@ -3736,6 +3737,8 @@ eon.registry.readyQueue = [];
 eon.registry.elementThemes = {};
 eon.registry.elementCounters = {};
 eon.registry.elementRegistry = {};
+
+eon.registry.registeredElements = 0;
 
 eon.registry.elementStatus = {
   declared: [],
@@ -3776,6 +3779,8 @@ eon.registry.registerElement = function (el) {
       el: el,
       status: "created"
     };
+
+    eon.registry.registeredElements++;
 
     // InnerHTML support
   } else if (uid && (!el.uid || !el.getAttribute("uid"))) {
@@ -3842,7 +3847,7 @@ eon.registry.addToReadyQueue = function (el, fn) {
 
 eon.registry.triggerRenders = function () {
 
-  if (Object.keys(eon.registry.elementStatus.attached).length == eon.registry.elementStatus.transformed.length) {
+  if (eon.registry.registeredElements == eon.registry.elementStatus.transformed.length) {
     
     eon.registry.triggerRenderCallbacks();
     eon.registry.triggerBubbleRenderCallbacks();
@@ -3925,7 +3930,7 @@ eon.registry.updateElementStatus = function (el, status) {
 
       eon.registry.elementStatus[status][uidFull] = el;
 
-      if (eon.registry.elementStatus.ready.length != Object.keys(eon.registry.elementStatus.attached).length) {
+      if (eon.registry.elementStatus.ready.length != eon.registry.registeredElements) {
         eon["__onReady__triggered"] = false;
       }
 
@@ -4815,33 +4820,25 @@ eon.createAttributesObserver = function (el, config) {
     // First we check if we have attributes to observe
     if (observeAttributesKeys.length > 0) {
 
-        var property, privateProperty, value;
+        var key, property, privateProperty;
 
         // For each observe attribute if check which value should be assign to it
         for (var i = 0; i < observeAttributesKeys.length; i++) {
 
-            property = eon.util.hyphenToCamelCase(observeAttributesKeys[i]);
+            key = observeAttributesKeys[i].slice(0);
+            property = eon.util.hyphenToCamelCase(key);
             privateProperty = "__" + property;
 
             // If the attribute already has a value we assign this value to its corresponding property
-            if (el.getAttribute(observeAttributesKeys[i])) {
+            if (el.getAttribute(key)) {
 
-                el[privateProperty] = el.getAttribute(observeAttributesKeys[i]);
+                el[privateProperty] = el.getAttribute(key);
 
                 // If the attribute has no value we check if the property has it, if not we assign it an empty value
             } else {
 
                 if (config.properties[property].reflectDefault) {
-
-                    value = el.hasOwnProperty(privateProperty) ? el[privateProperty] : "";
-
-                    // Only sets the attribute if the value is not of object type
-                    if (typeof value != "object") {
-                        el.setAttribute(observeAttributesKeys[i], value);
-                    } else {
-                        el.removeAttribute(observeAttributesKeys[i]);
-                    }
-
+                    eon.handleReflectDefaultProperty(el, key, property);
                 }
 
             }
@@ -4877,6 +4874,24 @@ eon.createAttributesObserver = function (el, config) {
     }
 
 };
+
+eon.handleReflectDefaultProperty = function (el, key, property) {
+    
+    var value = el.hasOwnProperty("__" + property) ? el["__" + property] : "";
+    
+    // This is done in the onInit callback since we cannot set an attribute in the onCreated one
+    el.onInit(function () {
+
+        // Only sets the attribute if the value is not of object type
+        if (typeof value != "object") {
+            el.setAttribute(key, value);
+        } else {
+            el.removeAttribute(key);
+        }
+
+    });
+
+}
 
 eon.handleProperty = function (el, config, reflectProperties, observeProperties, property) {
 
